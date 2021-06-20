@@ -1,9 +1,8 @@
-import React from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
 import InputBase from "@material-ui/core/InputBase";
-import IconButton from "@material-ui/core/IconButton";
+import Paper from "@material-ui/core/Paper";
+import { makeStyles } from "@material-ui/core/styles";
 import SearchIcon from "@material-ui/icons/Search";
+import React from "react";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -32,14 +31,9 @@ const SearchBar = props => {
         className={classes.input}
         placeholder="Search"
         inputProps={{ "aria-label": "search" }}
+        onChange={e => props.onChange(e.target.value)}
       />
-      <IconButton
-        type="submit"
-        className={classes.iconButton}
-        aria-label="search"
-      >
-        <SearchIcon />
-      </IconButton>
+      <SearchIcon className={classes.iconButton} />
     </Paper>
   );
 };

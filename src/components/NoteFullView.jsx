@@ -7,6 +7,9 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import TextField from "@material-ui/core/TextField";
 import { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import Api, { isOk } from "../api/Api";
+import { useSnackbar } from "../snackbar/useSnackbar";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -16,7 +19,23 @@ const useStyles = makeStyles(theme => ({
 
 const NoteFullView = props => {
   const classes = useStyles();
+  const { showSnackbarMessage } = useSnackbar();
   const [note, setNote] = useState(props.note);
+  const [isLoading, setLoading] = useState(false);
+  const saveNote = newNote => {
+    setLoading(true);
+    Api.saveNote(newNote)
+      .then(resp => {
+        if (!isOk(resp.data.status)) throw new Error();
+      })
+      .then(() => {
+        showSnackbarMessage("Note saved successfully");
+        props.close();
+        props.loadUserProfile();
+      })
+      .catch(() => showSnackbarMessage("Error saving note"))
+      .finally(setLoading(false));
+  };
   useEffect(() => {
     setNote(props.note);
   }, [props.note]);
@@ -29,34 +48,40 @@ const NoteFullView = props => {
       aria-describedby="scroll-dialog-description"
       classes={{ paper: classes.paper }}
     >
-      <DialogTitle id="scroll-dialog-title">{note.title}</DialogTitle>
-      <DialogContent>
-        <TextField
-          id="outlined-multiline-static"
-          multiline
-          fullWidth
-          rows={20}
-          variant="outlined"
-          value={note.body}
-          onChange={e => {
-            setNote(prevState => ({ ...prevState, body: e.target.value }));
-          }}
-          inputRef={input => input && input.focus()}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={props.close} color="primary">
-          Cancel
-        </Button>
-        <Button
-          onClick={() => {
-            props.save(note);
-          }}
-          color="primary"
-        >
-          Save
-        </Button>
-      </DialogActions>
+      {isLoading ? (
+        <CircularProgress />
+      ) : (
+        <>
+          <DialogTitle id="scroll-dialog-title">
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={note.title}
+              onChange={e => {
+                setNote(prevState => ({ ...prevState, title: e.target.value }));
+              }}
+              label="Title"
+            />
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              multiline
+              fullWidth
+              rows={20}
+              variant="outlined"
+              value={note.body}
+              onChange={e => {
+                setNote(prevState => ({ ...prevState, body: e.target.value }));
+              }}
+              label="Body"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={props.close}>Cancel</Button>
+            <Button onClick={() => saveNote(note)}>Save</Button>
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   );
 };

@@ -1,14 +1,15 @@
-import SearchBar from "../components/SearchBar";
-import { makeStyles } from "@material-ui/core/styles";
+import { Grid, IconButton } from "@material-ui/core";
 import Box from "@material-ui/core/Box";
-import { Grid } from "@material-ui/core";
-import { useState } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import { useEffect, useState } from "react";
 import NoteCard from "../components/NoteCard";
 import NoteFullView from "../components/NoteFullView";
-import DeleteDialog from "../components/DeleteDialog";
+import SearchBar from "../components/SearchBar";
+import DeleteDialog from "../dialogs/DeleteDialog";
+import AddCircleRoundedIcon from "@material-ui/icons/AddCircleRounded";
 
 const useStyles = makeStyles(theme => ({
-  root: {
+  search: {
     display: "flex",
     justifyContent: "center",
     marginTop: "2%"
@@ -18,16 +19,18 @@ const useStyles = makeStyles(theme => ({
   },
   noteCard: {
     margin: "20px"
+  },
+  addButton: {
+    position: "absolute",
+    bottom: "20px",
+    right: "20px"
   }
 }));
 
-const Home = () => {
-  //dummy state, TODO: replace by rest call
-  const [notes, setNotes] = useState([
-    { id: 1, title: "Note 1", body: "note 1 body", createdOn: 1619802653155 },
-    { id: 2, title: "Note 2", body: "note 2 body", createdOn: 1619802653155 },
-    { id: 3, title: "Note 3", body: "note 3 body", createdOn: 1619802653155 },
-    { id: 4, title: "Note 4", body: "note 4 body", createdOn: 1619802653155 }
+const Home = ({ notes, loadUserProfile }) => {
+  const [filteredNotes, setfilteredNotes] = useState([]);
+  useEffect(() => notes && setfilteredNotes(notes.map(note => note.id)), [
+    notes
   ]);
   const [fullView, setFullView] = useState({
     isOpen: false,
@@ -44,60 +47,64 @@ const Home = () => {
       note: { ...note }
     });
   };
-  const saveNote = newNote => {
-    //rest call
-    setNotes(prevState => {
-      let idx = prevState.findIndex(note => note.id === newNote.id);
-      const newState = [...prevState];
-      newState[idx] = newNote;
-      return newState;
-    });
-    setFullView({ ...fullView, isOpen: false };
-  };
-  const deleteNote = id => {
-    //rest call
-    setNotes(prevState => {
-      let idx = prevState.findIndex(note => note.id === id);
-      const newState = [...prevState];
-      newState.splice(idx, 1);
-      return newState;
-    });
+  const updateSearchResult = subStr => {
+    setfilteredNotes(
+      notes
+        .filter(
+          note =>
+            (note.title && note.title.includes(subStr)) ||
+            (note.body && note.body.includes(subStr))
+        )
+        .map(note => note.id)
+    );
   };
   const classes = useStyles();
   return (
     <>
-      <Box className={classes.root}>
-        <SearchBar />
+      <Box className={classes.search}>
+        <SearchBar onChange={updateSearchResult} />
       </Box>
       <Grid container className={classes.noteGrid}>
-        {notes.map((note, idx) => (
-          <Grid item xs={3} key={idx} className={classes.noteCard}>
-            <NoteCard
-              noteData={note}
-              openNote={() => openNote(note.id)}
-              deleteNote={() => deleteNote(note.id)}
-            ></NoteCard>
-          </Grid>
-        ))}
+        {notes &&
+          notes.map((note, idx) =>
+            filteredNotes.includes(note.id) ? (
+              <Grid item xs={3} key={idx} className={classes.noteCard}>
+                <NoteCard
+                  noteData={note}
+                  openNote={() => openNote(note.id)}
+                  deleteNote={() =>
+                    setDelDialog({ isOpen: true, noteId: note.id })
+                  }
+                ></NoteCard>
+              </Grid>
+            ) : (
+              ""
+            )
+          )}
       </Grid>
+      <IconButton
+        aria-label="add"
+        onClick={() => {
+          setFullView({
+            isOpen: true,
+            note: { id: null, title: "", body: "", createdOn: null }
+          });
+        }}
+        className={classes.addButton}
+      >
+        <AddCircleRoundedIcon style={{ fontSize: 60 }} color="secondary" />
+      </IconButton>
       <NoteFullView
         isOpen={fullView.isOpen}
         close={() => setFullView({ ...fullView, isOpen: false })}
         note={fullView.note}
-        save={saveNote}
+        loadUserProfile={loadUserProfile}
       />
       <DeleteDialog
         isOpen={delDialog.isOpen}
-        close={setDelDialog({ ...delDialog, isOpen: false })}
-        delete={deleteNote}
+        close={() => setDelDialog({ ...delDialog, isOpen: false })}
         noteId={delDialog.noteId}
-      />
-      <Snackbar
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        key={`${"top"},${"center"}`}
-        open={open}
-        onClose={handleClose}
-        message="I love snacks"
+        loadUserProfile={loadUserProfile}
       />
     </>
   );

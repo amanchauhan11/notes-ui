@@ -24,9 +24,7 @@ const NoteCard = props => {
           <Typography component="h6" variant="h6">
             {props.noteData.title}
           </Typography>
-          <Typography variant="body1" color="textSecondary">
-            {props.noteData.content}
-          </Typography>
+          <Typography variant="body1">{props.noteData.body}</Typography>
         </CardContent>
       </CardActionArea>
       <div className={classes.controls}>
