@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = "";
+const baseUrl = "/api";
 
 const Api = {
   getUserProfile: () => {
