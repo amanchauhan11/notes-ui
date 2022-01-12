@@ -28,8 +28,7 @@ const SignUpDialog = props => {
   const submitLogin = e => {
     e.preventDefault();
     setLoading(true);
-    Api.signup();
-    Promise.resolve({ status: "Success" })
+    Api.signup(signupForm.email, signupForm.password).resolve({ status: "Success" })
       .then(() => {
         setLoading(false);
         props.close();
